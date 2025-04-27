@@ -7,9 +7,10 @@ import altair as alt
 st.title("Garminアクティビティビューア")
 
 # データベース接続
-conn = sqlite3.connect('/home/peipeipe/garmin-streamlit/garmin_activities.db')
+conn = sqlite3.connect('garmin_activities.db')
 df = pd.read_sql_query('SELECT * FROM activities', conn)
-
+# dfからstart_rat,start_long,stop_lat,stop_longを削除
+df.drop(columns=['start_lat', 'start_long', 'stop_lat', 'stop_long'], inplace=True)
 # データプレビュー
 if st.checkbox("データを表示する"):
     st.dataframe(df)
@@ -32,4 +33,3 @@ chart = alt.Chart(filtered_df).mark_line().encode(
 )
 st.altair_chart(chart, use_container_width=True)
 
-# さらに何か追加したくなったらここに書いていこう！
