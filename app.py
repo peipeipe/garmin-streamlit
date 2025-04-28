@@ -4,7 +4,7 @@ import sqlite3
 import altair as alt
 
 # タイトル
-st.title("Garminアクティビティビューア")
+st.title("peipeipe's Garmin Data Analysis")
 
 # データベース接続
 conn = sqlite3.connect('garmin_activities.db')
@@ -68,3 +68,40 @@ text = chart.mark_text(
 )
 
 st.altair_chart(chart + text, use_container_width=True)
+
+# garmin_summary.db への接続
+conn_summary = sqlite3.connect('garmin_summary.db')
+
+# days_summary テーブルからデータ取得
+weight_df = pd.read_sql_query('SELECT day, weight_avg FROM days_summary', conn_summary)
+
+# 日付型に変換
+weight_df['day'] = pd.to_datetime(weight_df['day'])
+
+# 今日から過去60日間だけフィルタ
+today = pd.to_datetime('today').normalize()
+past_60_days = today - pd.Timedelta(days=60)
+weight_df = weight_df[(weight_df['day'] >= past_60_days) & (weight_df['day'] <= today)]
+
+# 日付をインデックスにして、全日付を補間
+weight_df = weight_df.set_index('day').asfreq('D')
+
+# 欠損値を線形補間（自然に繋ぐ）
+weight_df['weight_avg'] = weight_df['weight_avg'].interpolate()
+
+# インデックスを戻す
+weight_df = weight_df.reset_index()
+
+# Streamlitでグラフ表示
+st.header("過去60日間の体重推移")
+
+chart = alt.Chart(weight_df).mark_line().encode(
+    x=alt.X('day:T', title='日付'),
+    y=alt.Y('weight_avg:Q', title='体重 (kg)', scale=alt.Scale(domain=[50, 65])),
+    tooltip=['day', 'weight_avg']
+).properties(
+    width=700,
+    height=400
+)
+
+st.altair_chart(chart, use_container_width=True)
