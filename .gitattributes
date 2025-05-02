@@ -1,1 +1,2 @@
 garmin_activities.db filter=lfs diff=lfs merge=lfs -text
+garmin_summary.db filter=lfs diff=lfs merge=lfs -text
